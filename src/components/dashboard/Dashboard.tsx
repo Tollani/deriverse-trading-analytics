@@ -142,6 +142,9 @@ export function Dashboard() {
     );
   }
 
+  // If not connected, show the dashboard with loading placeholders
+  const showLoadingPlaceholders = !connected;
+
   // Show full dashboard (connected with data OR not connected with placeholder)
   return (
     <div className="min-h-screen bg-background">
@@ -167,41 +170,47 @@ export function Dashboard() {
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
           <MetricCard
             title="Total PnL"
-            value={formatCurrency(metrics.totalPnl)}
-            change={metrics.totalPnlPercent}
-            variant={metrics.totalPnl >= 0 ? 'profit' : 'loss'}
+            value={showLoadingPlaceholders ? undefined : formatCurrency(metrics.totalPnl)}
+            change={showLoadingPlaceholders ? undefined : metrics.totalPnlPercent}
+            variant={showLoadingPlaceholders ? 'default' : (metrics.totalPnl >= 0 ? 'profit' : 'loss')}
             icon={<DollarSign className="h-4 w-4" />}
+            isLoading={showLoadingPlaceholders}
           />
           <MetricCard
             title="ROI"
-            value={`${metrics.roi.toFixed(2)}%`}
-            subtitle="All time"
-            variant={metrics.roi >= 0 ? 'profit' : 'loss'}
+            value={showLoadingPlaceholders ? undefined : `${metrics.roi.toFixed(2)}%`}
+            subtitle={showLoadingPlaceholders ? undefined : "All time"}
+            variant={showLoadingPlaceholders ? 'default' : (metrics.roi >= 0 ? 'profit' : 'loss')}
             icon={<TrendingUp className="h-4 w-4" />}
+            isLoading={showLoadingPlaceholders}
           />
           <MetricCard
             title="Total Trades"
-            value={metrics.totalTrades.toString()}
-            subtitle={`${metrics.winningTrades}W / ${metrics.losingTrades}L`}
+            value={showLoadingPlaceholders ? undefined : metrics.totalTrades.toString()}
+            subtitle={showLoadingPlaceholders ? undefined : `${metrics.winningTrades}W / ${metrics.losingTrades}L`}
             icon={<Activity className="h-4 w-4" />}
+            isLoading={showLoadingPlaceholders}
           />
           <MetricCard
             title="Win Rate"
-            value={`${metrics.winRate.toFixed(1)}%`}
-            variant={metrics.winRate >= 50 ? 'profit' : 'loss'}
+            value={showLoadingPlaceholders ? undefined : `${metrics.winRate.toFixed(1)}%`}
+            variant={showLoadingPlaceholders ? 'default' : (metrics.winRate >= 50 ? 'profit' : 'loss')}
             icon={<Target className="h-4 w-4" />}
+            isLoading={showLoadingPlaceholders}
           />
           <MetricCard
             title="Sharpe Ratio"
-            value={metrics.sharpeRatio.toFixed(2)}
-            variant={metrics.sharpeRatio >= 1 ? 'profit' : metrics.sharpeRatio >= 0 ? 'neutral' : 'loss'}
+            value={showLoadingPlaceholders ? undefined : metrics.sharpeRatio.toFixed(2)}
+            variant={showLoadingPlaceholders ? 'default' : (metrics.sharpeRatio >= 1 ? 'profit' : metrics.sharpeRatio >= 0 ? 'neutral' : 'loss')}
             icon={<BarChart3 className="h-4 w-4" />}
+            isLoading={showLoadingPlaceholders}
           />
           <MetricCard
             title="Max Drawdown"
-            value={`-${metrics.maxDrawdown.toFixed(2)}%`}
-            variant="loss"
+            value={showLoadingPlaceholders ? undefined : `-${metrics.maxDrawdown.toFixed(2)}%`}
+            variant={showLoadingPlaceholders ? 'default' : 'loss'}
             icon={<AlertTriangle className="h-4 w-4" />}
+            isLoading={showLoadingPlaceholders}
           />
         </div>
 
@@ -216,12 +225,21 @@ export function Dashboard() {
                   <CardDescription>Portfolio performance over time</CardDescription>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-bold font-mono text-foreground">
-                    ${(10000 + metrics.totalPnl).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                  </p>
-                  <p className={`text-sm font-mono ${metrics.totalPnl >= 0 ? 'text-profit' : 'text-loss'}`}>
-                    {metrics.totalPnl >= 0 ? '+' : ''}{formatCurrency(metrics.totalPnl)} ({metrics.roi.toFixed(2)}%)
-                  </p>
+                  {showLoadingPlaceholders ? (
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="h-7 w-28 bg-muted rounded animate-pulse" />
+                      <div className="h-4 w-20 bg-muted rounded animate-pulse" />
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold font-mono text-foreground">
+                        ${(10000 + metrics.totalPnl).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </p>
+                      <p className={`text-sm font-mono ${metrics.totalPnl >= 0 ? 'text-profit' : 'text-loss'}`}>
+                        {metrics.totalPnl >= 0 ? '+' : ''}{formatCurrency(metrics.totalPnl)} ({metrics.roi.toFixed(2)}%)
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
             </CardHeader>
