@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -19,6 +17,7 @@ import { format, subDays, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { CalendarIcon, Download, RefreshCw, Bell, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
+import { WalletButton } from "./WalletButton";
 
 interface DashboardHeaderProps {
   dateRange: DateRange | undefined;
@@ -38,7 +37,6 @@ const presets = [
 
 export function DashboardHeader({ dateRange, onDateRangeChange, onRefresh, isLoading }: DashboardHeaderProps) {
   const [preset, setPreset] = useState("30d");
-  const { connected, publicKey } = useWallet();
   
   const handlePresetChange = (value: string) => {
     setPreset(value);
@@ -47,10 +45,6 @@ export function DashboardHeader({ dateRange, onDateRangeChange, onRefresh, isLoa
       onDateRangeChange(selectedPreset.getRange());
     }
   };
-
-  const truncatedAddress = publicKey 
-    ? `${publicKey.toBase58().slice(0, 4)}...${publicKey.toBase58().slice(-4)}`
-    : '';
 
   return (
     <header className="sticky top-0 z-50 glass border-b border-border">
@@ -141,21 +135,7 @@ export function DashboardHeader({ dateRange, onDateRangeChange, onRefresh, isLoa
             </Button>
             
             {/* Wallet Button */}
-            <WalletMultiButton 
-              className={cn(
-                "!rounded-lg !h-9 !px-4 !text-sm !font-medium transition-all",
-                connected 
-                  ? "!bg-primary/10 !text-primary hover:!bg-primary/20 !border !border-primary/20"
-                  : "!bg-primary hover:!bg-primary/90 !text-primary-foreground"
-              )}
-            >
-              {connected && (
-                <span className="flex items-center gap-2">
-                  <span className="font-mono">{truncatedAddress}</span>
-                  <span className="w-2 h-2 rounded-full bg-profit animate-pulse" />
-                </span>
-              )}
-            </WalletMultiButton>
+            <WalletButton />
           </div>
         </div>
       </div>
