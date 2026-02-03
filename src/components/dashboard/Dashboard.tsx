@@ -149,6 +149,8 @@ export function Dashboard() {
         onDateRangeChange={setDateRange}
         onRefresh={handleRefresh}
         isLoading={isLoading}
+        trades={filteredTrades}
+        metrics={metrics}
       />
       
       <main className="container mx-auto px-4 py-6 space-y-6">
