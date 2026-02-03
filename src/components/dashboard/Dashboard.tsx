@@ -90,25 +90,8 @@ export function Dashboard() {
     return `$${value.toFixed(2)}`;
   };
 
-  // Show connect prompt within the dashboard layout when not connected
-  if (!connected) {
-    return (
-      <div className="min-h-screen bg-background">
-        <DashboardHeader
-          dateRange={dateRange}
-          onDateRangeChange={setDateRange}
-          onRefresh={handleRefresh}
-          isLoading={isLoading}
-        />
-        <main className="container mx-auto px-4 py-6">
-          <EmptyState type="not-connected" />
-        </main>
-      </div>
-    );
-  }
-
   // Show loading state
-  if (isLoading) {
+  if (isLoading && connected) {
     return (
       <div className="min-h-screen bg-background">
         <DashboardHeader
@@ -118,18 +101,14 @@ export function Dashboard() {
           isLoading={isLoading}
         />
         <main className="container mx-auto px-4 py-6">
-          <Card>
-            <CardContent className="p-0">
-              <EmptyState type="loading" />
-            </CardContent>
-          </Card>
+          <EmptyState type="loading" />
         </main>
       </div>
     );
   }
 
   // Show error state
-  if (error) {
+  if (error && connected) {
     return (
       <div className="min-h-screen bg-background">
         <DashboardHeader
@@ -139,18 +118,14 @@ export function Dashboard() {
           isLoading={isLoading}
         />
         <main className="container mx-auto px-4 py-6">
-          <Card>
-            <CardContent className="p-0">
-              <EmptyState type="error" message={error} />
-            </CardContent>
-          </Card>
+          <EmptyState type="error" message={error} />
         </main>
       </div>
     );
   }
 
-  // Show no trades state
-  if (trades.length === 0) {
+  // Show no trades state (only when connected)
+  if (trades.length === 0 && connected) {
     return (
       <div className="min-h-screen bg-background">
         <DashboardHeader
@@ -160,16 +135,13 @@ export function Dashboard() {
           isLoading={isLoading}
         />
         <main className="container mx-auto px-4 py-6">
-          <Card>
-            <CardContent className="p-0">
-              <EmptyState type="no-trades" />
-            </CardContent>
-          </Card>
+          <EmptyState type="no-trades" />
         </main>
       </div>
     );
   }
 
+  // Show full dashboard (connected with data OR not connected with placeholder)
   return (
     <div className="min-h-screen bg-background">
       <DashboardHeader
