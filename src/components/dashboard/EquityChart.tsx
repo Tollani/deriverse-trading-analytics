@@ -9,8 +9,7 @@ import {
   YAxis,
   ReferenceLine,
 } from "recharts";
-import { EquityPoint } from "@/lib/mockData";
-import { format } from "date-fns";
+import { EquityPoint } from "@/lib/types";
 
 interface EquityChartProps {
   data: EquityPoint[];
@@ -22,8 +21,8 @@ export function EquityChart({ data, showDrawdown = true, showBenchmark = false }
   const chartData = useMemo(() => {
     return data.map((point, index) => ({
       ...point,
-      dateFormatted: format(point.date, "MMM dd"),
-      dateTime: format(point.date, "MMM dd, HH:mm"),
+      dateFormatted: point.date,
+      dateTime: point.date,
       index,
     }));
   }, [data]);

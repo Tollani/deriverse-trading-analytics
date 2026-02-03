@@ -6,7 +6,7 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
-import { FeeBreakdown } from "@/lib/mockData";
+import { FeeBreakdown } from "@/lib/types";
 
 interface FeeChartProps {
   data: FeeBreakdown[];
