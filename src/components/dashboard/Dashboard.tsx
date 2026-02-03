@@ -90,7 +90,7 @@ export function Dashboard() {
     return `$${value.toFixed(2)}`;
   };
 
-  // Show empty state if not connected
+  // Show connect prompt within the dashboard layout when not connected
   if (!connected) {
     return (
       <div className="min-h-screen bg-background">
@@ -101,11 +101,7 @@ export function Dashboard() {
           isLoading={isLoading}
         />
         <main className="container mx-auto px-4 py-6">
-          <Card>
-            <CardContent className="p-0">
-              <EmptyState type="not-connected" />
-            </CardContent>
-          </Card>
+          <EmptyState type="not-connected" />
         </main>
       </div>
     );
