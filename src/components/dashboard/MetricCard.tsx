@@ -1,15 +1,16 @@
 import { cn } from "@/lib/utils";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Loader2 } from "lucide-react";
 
 interface MetricCardProps {
   title: string;
-  value: string | number;
+  value?: string | number;
   subtitle?: string;
   change?: number;
   changeLabel?: string;
   variant?: 'default' | 'profit' | 'loss' | 'neutral';
   icon?: React.ReactNode;
   className?: string;
+  isLoading?: boolean;
 }
 
 export function MetricCard({
@@ -21,6 +22,7 @@ export function MetricCard({
   variant = 'default',
   icon,
   className,
+  isLoading = false,
 }: MetricCardProps) {
   const getTrendIcon = () => {
     if (change === undefined) return null;
@@ -40,8 +42,8 @@ export function MetricCard({
     <div
       className={cn(
         "metric-card group",
-        variant === 'profit' && "metric-card-profit",
-        variant === 'loss' && "metric-card-loss",
+        variant === 'profit' && !isLoading && "metric-card-profit",
+        variant === 'loss' && !isLoading && "metric-card-loss",
         className
       )}
     >
@@ -49,8 +51,8 @@ export function MetricCard({
       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
         <div className={cn(
           "absolute inset-0 rounded-lg blur-xl",
-          variant === 'profit' && "bg-profit/5",
-          variant === 'loss' && "bg-loss/5",
+          variant === 'profit' && !isLoading && "bg-profit/5",
+          variant === 'loss' && !isLoading && "bg-loss/5",
           variant === 'default' && "bg-primary/5",
         )} />
       </div>
@@ -61,29 +63,38 @@ export function MetricCard({
           {icon && <span className="text-muted-foreground">{icon}</span>}
         </div>
         
-        <div className="flex items-baseline gap-2">
-          <span className={cn(
-            "text-2xl font-bold font-mono tracking-tight",
-            variant === 'profit' && "text-profit",
-            variant === 'loss' && "text-loss",
-          )}>
-            {value}
-          </span>
-          {subtitle && (
-            <span className="text-sm text-muted-foreground">{subtitle}</span>
-          )}
-        </div>
-        
-        {change !== undefined && (
-          <div className={cn("flex items-center gap-1 mt-2 text-sm", getChangeColor())}>
-            {getTrendIcon()}
-            <span className="font-medium font-mono">
-              {change > 0 ? '+' : ''}{change.toFixed(2)}%
-            </span>
-            {changeLabel && (
-              <span className="text-muted-foreground text-xs">{changeLabel}</span>
-            )}
+        {isLoading ? (
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Connect wallet</span>
           </div>
+        ) : (
+          <>
+            <div className="flex items-baseline gap-2">
+              <span className={cn(
+                "text-2xl font-bold font-mono tracking-tight",
+                variant === 'profit' && "text-profit",
+                variant === 'loss' && "text-loss",
+              )}>
+                {value}
+              </span>
+              {subtitle && (
+                <span className="text-sm text-muted-foreground">{subtitle}</span>
+              )}
+            </div>
+            
+            {change !== undefined && (
+              <div className={cn("flex items-center gap-1 mt-2 text-sm", getChangeColor())}>
+                {getTrendIcon()}
+                <span className="font-medium font-mono">
+                  {change > 0 ? '+' : ''}{change.toFixed(2)}%
+                </span>
+                {changeLabel && (
+                  <span className="text-muted-foreground text-xs">{changeLabel}</span>
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
