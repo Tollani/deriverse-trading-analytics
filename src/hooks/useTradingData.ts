@@ -117,10 +117,13 @@ export function useTradingData() {
       
       let errorMessage = 'Failed to fetch trading data';
       if (error instanceof Error) {
-        if (error.message.includes('429') || error.message.includes('rate')) {
+        const msg = error.message.toLowerCase();
+        if (msg.includes('429') || msg.includes('rate')) {
           errorMessage = 'Rate limited by RPC. Please try again in a few seconds.';
-        } else if (error.message.includes('timeout')) {
+        } else if (msg.includes('timeout')) {
           errorMessage = 'Connection timeout. Please check your network and try again.';
+        } else if (msg.includes('403') || msg.includes('forbidden')) {
+          errorMessage = 'RPC access denied. The endpoint may be rate-limited. Retrying with fallback...';
         } else {
           errorMessage = error.message;
         }
