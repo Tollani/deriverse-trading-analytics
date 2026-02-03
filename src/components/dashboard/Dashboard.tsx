@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 
 import { DashboardHeader } from "./DashboardHeader";
+import { DashboardToolbar } from "./DashboardToolbar";
 import { MetricCard } from "./MetricCard";
 import { EquityChart } from "./EquityChart";
 import { VolumeChart } from "./VolumeChart";
@@ -149,11 +150,19 @@ export function Dashboard() {
         onDateRangeChange={setDateRange}
         onRefresh={handleRefresh}
         isLoading={isLoading}
-        trades={filteredTrades}
-        metrics={metrics}
       />
       
       <main className="container mx-auto px-4 py-6 space-y-6">
+        {/* Toolbar with date filters and export */}
+        <DashboardToolbar
+          dateRange={dateRange}
+          onDateRangeChange={setDateRange}
+          onRefresh={handleRefresh}
+          isLoading={isLoading}
+          trades={filteredTrades}
+          metrics={metrics}
+        />
+        
         {/* Key Metrics Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
           <MetricCard
