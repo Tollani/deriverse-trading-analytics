@@ -13,11 +13,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { format, subDays, subMonths, startOfMonth, endOfMonth } from "date-fns";
-import { CalendarIcon, Download, RefreshCw, Bell, ExternalLink } from "lucide-react";
+import { CalendarIcon, Download, RefreshCw, ExternalLink, FileSpreadsheet, FileText, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
 import { WalletButton } from "./WalletButton";
+import { Trade, PortfolioMetrics } from "@/lib/types";
+import { exportTradesToCSV, exportFullReport, exportMetrics } from "@/lib/export";
+import { toast } from "sonner";
 import deriverselogo from "@/assets/deriverse-logo.png";
 
 interface DashboardHeaderProps {
@@ -25,6 +35,8 @@ interface DashboardHeaderProps {
   onDateRangeChange: (range: DateRange | undefined) => void;
   onRefresh: () => void;
   isLoading?: boolean;
+  trades?: Trade[];
+  metrics?: PortfolioMetrics;
 }
 
 const presets = [
@@ -36,7 +48,14 @@ const presets = [
   { label: "All time", value: "all", getRange: () => ({ from: subMonths(new Date(), 12), to: new Date() }) },
 ];
 
-export function DashboardHeader({ dateRange, onDateRangeChange, onRefresh, isLoading }: DashboardHeaderProps) {
+export function DashboardHeader({ 
+  dateRange, 
+  onDateRangeChange, 
+  onRefresh, 
+  isLoading,
+  trades = [],
+  metrics
+}: DashboardHeaderProps) {
   const [preset, setPreset] = useState("30d");
   
   const handlePresetChange = (value: string) => {
@@ -45,6 +64,33 @@ export function DashboardHeader({ dateRange, onDateRangeChange, onRefresh, isLoa
     if (selectedPreset) {
       onDateRangeChange(selectedPreset.getRange());
     }
+  };
+
+  const handleExportTrades = () => {
+    if (trades.length === 0) {
+      toast.error('No trades to export');
+      return;
+    }
+    exportTradesToCSV(trades);
+    toast.success('Trade history exported successfully');
+  };
+
+  const handleExportReport = () => {
+    if (!metrics || trades.length === 0) {
+      toast.error('No data to export');
+      return;
+    }
+    exportFullReport(trades, metrics);
+    toast.success('Full report exported successfully');
+  };
+
+  const handleExportMetrics = () => {
+    if (!metrics) {
+      toast.error('No metrics to export');
+      return;
+    }
+    exportMetrics(metrics);
+    toast.success('Metrics exported successfully');
   };
 
   return (
@@ -58,16 +104,16 @@ export function DashboardHeader({ dateRange, onDateRangeChange, onRefresh, isLoa
               alt="Deriverse" 
               className="w-10 h-10 rounded-lg"
             />
-            <div>
+            <div className="hidden sm:block">
               <h1 className="text-lg font-bold tracking-tight">Deriverse</h1>
               <p className="text-xs text-muted-foreground">Trading Analytics</p>
             </div>
           </div>
           
           {/* Center - Date controls */}
-          <div className="hidden md:flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <Select value={preset} onValueChange={handlePresetChange}>
-              <SelectTrigger className="w-[140px] h-9">
+              <SelectTrigger className="w-[120px] sm:w-[140px] h-9 text-xs sm:text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -79,7 +125,7 @@ export function DashboardHeader({ dateRange, onDateRangeChange, onRefresh, isLoa
             
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="h-9 gap-2">
+                <Button variant="outline" size="sm" className="h-9 gap-2 hidden sm:flex">
                   <CalendarIcon className="h-4 w-4" />
                   {dateRange?.from ? (
                     <>
@@ -116,14 +162,31 @@ export function DashboardHeader({ dateRange, onDateRangeChange, onRefresh, isLoa
           
           {/* Right - Actions */}
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="h-9 w-9 hidden sm:flex">
-              <Bell className="h-4 w-4" />
-            </Button>
-            
-            <Button variant="outline" size="sm" className="h-9 gap-2 hidden sm:flex">
-              <Download className="h-4 w-4" />
-              Export
-            </Button>
+            {/* Export Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-9 gap-2">
+                  <Download className="h-4 w-4" />
+                  <span className="hidden sm:inline">Export</span>
+                  <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={handleExportReport} className="gap-2 cursor-pointer">
+                  <FileText className="h-4 w-4" />
+                  Full Report (CSV)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportTrades} className="gap-2 cursor-pointer">
+                  <FileSpreadsheet className="h-4 w-4" />
+                  Trade History (CSV)
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleExportMetrics} className="gap-2 cursor-pointer">
+                  <FileSpreadsheet className="h-4 w-4" />
+                  Metrics Only (CSV)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             
             <Button 
               variant="outline" 
