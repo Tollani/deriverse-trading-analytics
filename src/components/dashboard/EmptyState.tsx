@@ -69,62 +69,8 @@ export function EmptyState({ type, message }: EmptyStateProps) {
   }
 
   if (!connected || type === 'not-connected') {
-    return (
-      <div className="grid gap-6">
-        {/* Preview metrics - dimmed */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 opacity-40">
-          {['Total PnL', 'ROI', 'Total Trades', 'Win Rate', 'Sharpe Ratio', 'Max Drawdown'].map((label) => (
-            <Card key={label}>
-              <CardContent className="p-4">
-                <p className="text-xs text-muted-foreground mb-1">{label}</p>
-                <p className="text-xl font-bold font-mono">--</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-        
-        {/* Connect wallet prompt */}
-        <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5">
-          <CardContent className="flex flex-col items-center justify-center py-16 px-4 text-center">
-            <div className="relative mb-6">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                <Wallet className="w-10 h-10 text-primary" />
-              </div>
-              <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-accent flex items-center justify-center">
-                <ArrowRight className="w-3.5 h-3.5 text-accent-foreground" />
-              </div>
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Connect Your Wallet</h3>
-            <p className="text-muted-foreground max-w-md mb-1 text-sm">
-              Connect your Solana wallet to view your trading analytics and performance metrics from Deriverse.
-            </p>
-            <p className="text-xs text-muted-foreground mb-6">
-              Use the wallet button in the header to connect
-            </p>
-          </CardContent>
-        </Card>
-        
-        {/* Preview charts - dimmed */}
-        <div className="grid lg:grid-cols-3 gap-6 opacity-40">
-          <Card className="lg:col-span-2">
-            <CardContent className="p-6">
-              <div className="h-4 w-32 bg-muted rounded mb-4" />
-              <div className="h-48 bg-muted/30 rounded flex items-center justify-center">
-                <TrendingUp className="w-12 h-12 text-muted-foreground/30" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="h-4 w-32 bg-muted rounded mb-4" />
-              <div className="h-48 bg-muted/30 rounded flex items-center justify-center">
-                <BarChart3 className="w-12 h-12 text-muted-foreground/30" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
+    // Show empty dashboard state - no prompt, just placeholder data
+    return null;
   }
 
   // No trades state
