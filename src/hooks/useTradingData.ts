@@ -75,6 +75,10 @@ export function useTradingData() {
     try {
       console.log(`Fetching Deriverse transactions for wallet: ${walletAddress}`);
       console.log(`Using Program ID: ${DERIVERSE_PROGRAM_ID.toBase58()}`);
+      // Helps debug provider-specific issues (403/rate-limit/CORS)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rpcEndpoint = (connection as any)?.rpcEndpoint as string | undefined;
+      if (rpcEndpoint) console.log(`RPC endpoint: ${rpcEndpoint}`);
 
       // Fetch transactions from Solana blockchain
       const transactions = await fetchDeriverseTransactions(
@@ -123,7 +127,8 @@ export function useTradingData() {
         } else if (msg.includes('timeout')) {
           errorMessage = 'Connection timeout. Please check your network and try again.';
         } else if (msg.includes('403') || msg.includes('forbidden')) {
-          errorMessage = 'RPC access denied. The endpoint may be rate-limited. Retrying with fallback...';
+          // Don't claim we retried unless we actually do.
+          errorMessage = 'RPC access denied (403). Please retry in a moment.';
         } else {
           errorMessage = error.message;
         }
