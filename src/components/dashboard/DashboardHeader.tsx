@@ -18,6 +18,7 @@ import { CalendarIcon, Download, RefreshCw, Bell, ExternalLink } from "lucide-re
 import { cn } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
 import { WalletButton } from "./WalletButton";
+import deriverselogo from "@/assets/deriverse-logo.png";
 
 interface DashboardHeaderProps {
   dateRange: DateRange | undefined;
@@ -52,9 +53,11 @@ export function DashboardHeader({ dateRange, onDateRangeChange, onRefresh, isLoa
         <div className="flex items-center justify-between gap-4">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="relative w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-              <span className="text-xl font-bold text-primary-foreground">D</span>
-            </div>
+            <img 
+              src={deriverselogo} 
+              alt="Deriverse" 
+              className="w-10 h-10 rounded-lg"
+            />
             <div>
               <h1 className="text-lg font-bold tracking-tight">Deriverse</h1>
               <p className="text-xs text-muted-foreground">Trading Analytics</p>
