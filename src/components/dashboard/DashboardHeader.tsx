@@ -98,15 +98,15 @@ export function DashboardHeader({
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between gap-4">
           {/* Logo */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-shrink-0">
             <img 
               src={deriverselogo} 
               alt="Deriverse" 
               className="w-10 h-10 rounded-lg"
             />
-            <div className="hidden sm:block">
+            <div>
               <h1 className="text-lg font-bold tracking-tight">Deriverse</h1>
-              <p className="text-xs text-muted-foreground">Trading Analytics</p>
+              <p className="text-xs text-muted-foreground hidden sm:block">Trading Analytics</p>
             </div>
           </div>
           
