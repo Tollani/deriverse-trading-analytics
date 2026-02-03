@@ -106,7 +106,7 @@ export function DashboardHeader({
             />
             <div>
               <h1 className="text-lg font-bold tracking-tight">Deriverse</h1>
-              <p className="text-xs text-muted-foreground hidden sm:block">Trading Analytics</p>
+              <p className="text-xs text-muted-foreground">Trading Analytics</p>
             </div>
           </div>
           
