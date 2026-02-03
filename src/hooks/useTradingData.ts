@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { 
   Trade, 
@@ -9,6 +9,16 @@ import {
   DailyPerformance,
   emptyMetrics 
 } from '@/lib/types';
+import {
+  fetchDeriverseTransactions,
+  convertToTrades,
+  calculateMetrics,
+  generateEquityCurve,
+  generateVolumeData,
+  generateFeeBreakdown,
+  generateTimePerformance,
+  DERIVERSE_PROGRAM_ID,
+} from '@/lib/deriverse';
 
 interface TradingDataState {
   trades: Trade[];
@@ -19,6 +29,7 @@ interface TradingDataState {
   timePerformance: DailyPerformance;
   isLoading: boolean;
   error: string | null;
+  lastUpdated: Date | null;
 }
 
 const initialState: TradingDataState = {
@@ -30,56 +41,110 @@ const initialState: TradingDataState = {
   timePerformance: { daily: [], hourly: [] },
   isLoading: false,
   error: null,
+  lastUpdated: null,
 };
+
+// Cache for trading data to prevent excessive RPC calls
+const dataCache = new Map<string, { data: TradingDataState; timestamp: number }>();
+const CACHE_DURATION = 60000; // 1 minute cache
 
 export function useTradingData() {
   const { connection } = useConnection();
   const { publicKey, connected } = useWallet();
   const [state, setState] = useState<TradingDataState>(initialState);
 
-  const fetchTradingData = useCallback(async () => {
+  const fetchTradingData = useCallback(async (forceRefresh = false) => {
     if (!connected || !publicKey) {
       setState(initialState);
       return;
     }
 
+    const walletAddress = publicKey.toBase58();
+    
+    // Check cache
+    if (!forceRefresh) {
+      const cached = dataCache.get(walletAddress);
+      if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+        setState(cached.data);
+        return;
+      }
+    }
+
     setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      // In production, this would fetch from:
-      // 1. Solana RPC for transaction history
-      // 2. Deriverse program accounts for positions
-      // 3. Parse transaction logs for trade data
-      
-      // For now, we return empty state since we need real blockchain data
-      // The user will see the empty state UI prompting them to start trading
-      
-      // Example of how to fetch transaction signatures:
-      // const signatures = await connection.getSignaturesForAddress(publicKey, { limit: 100 });
-      // const transactions = await connection.getParsedTransactions(signatures.map(s => s.signature));
-      
-      setState({
-        trades: [],
-        metrics: emptyMetrics,
-        equityCurve: [],
-        volumeData: [],
-        feeBreakdown: [],
-        timePerformance: { daily: [], hourly: [] },
+      console.log(`Fetching Deriverse transactions for wallet: ${walletAddress}`);
+      console.log(`Using Program ID: ${DERIVERSE_PROGRAM_ID.toBase58()}`);
+
+      // Fetch transactions from Solana blockchain
+      const transactions = await fetchDeriverseTransactions(
+        connection,
+        publicKey,
+        200 // Fetch last 200 transactions
+      );
+
+      console.log(`Found ${transactions.length} Deriverse transactions`);
+
+      // Convert to trades
+      const trades = convertToTrades(transactions);
+      console.log(`Converted to ${trades.length} completed trades`);
+
+      // Calculate all derived data
+      const metrics = calculateMetrics(trades);
+      const equityCurve = generateEquityCurve(trades);
+      const volumeData = generateVolumeData(trades);
+      const feeBreakdown = generateFeeBreakdown(trades);
+      const timePerformance = generateTimePerformance(trades);
+
+      const newState: TradingDataState = {
+        trades,
+        metrics,
+        equityCurve,
+        volumeData,
+        feeBreakdown,
+        timePerformance,
         isLoading: false,
         error: null,
-      });
+        lastUpdated: new Date(),
+      };
+
+      // Update cache
+      dataCache.set(walletAddress, { data: newState, timestamp: Date.now() });
+      
+      setState(newState);
     } catch (error) {
       console.error('Error fetching trading data:', error);
+      
+      let errorMessage = 'Failed to fetch trading data';
+      if (error instanceof Error) {
+        if (error.message.includes('429') || error.message.includes('rate')) {
+          errorMessage = 'Rate limited by RPC. Please try again in a few seconds.';
+        } else if (error.message.includes('timeout')) {
+          errorMessage = 'Connection timeout. Please check your network and try again.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
       setState(prev => ({
         ...prev,
         isLoading: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch trading data',
+        error: errorMessage,
       }));
     }
   }, [connection, publicKey, connected]);
 
+  // Auto-fetch when wallet connects
+  useEffect(() => {
+    if (connected && publicKey) {
+      fetchTradingData();
+    } else {
+      setState(initialState);
+    }
+  }, [connected, publicKey]); // Don't include fetchTradingData to avoid loop
+
   const refresh = useCallback(() => {
-    fetchTradingData();
+    fetchTradingData(true); // Force refresh, bypass cache
   }, [fetchTradingData]);
 
   return {
