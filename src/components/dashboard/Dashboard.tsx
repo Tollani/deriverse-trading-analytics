@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { subDays } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -27,56 +28,59 @@ import { WinRateGauge } from "./WinRateGauge";
 import { LongShortRatio } from "./LongShortRatio";
 import { TimeHeatmap } from "./TimeHeatmap";
 import { TradeHistoryTable } from "./TradeHistoryTable";
+import { EmptyState } from "./EmptyState";
 
-import {
-  generateTrades,
-  calculateMetrics,
-  generateEquityCurve,
-  generateVolumeData,
-  generateFeeBreakdown,
-  generateTimePerformance,
-  Trade,
-} from "@/lib/mockData";
+import { useTradingData } from "@/hooks/useTradingData";
+import { Trade } from "@/lib/types";
 
 export function Dashboard() {
+  const { connected } = useWallet();
+  const { 
+    trades, 
+    metrics, 
+    equityCurve: equityData, 
+    volumeData, 
+    feeBreakdown: feeData, 
+    timePerformance,
+    isLoading, 
+    error,
+    refresh 
+  } = useTradingData();
+
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 30),
     to: new Date(),
   });
-  const [isLoading, setIsLoading] = useState(false);
-  
-  // Generate mock data
-  const [trades] = useState<Trade[]>(() => generateTrades(150));
-  
+
+  // Fetch data when wallet connects
+  useEffect(() => {
+    if (connected) {
+      refresh();
+    }
+  }, [connected, refresh]);
+
   const filteredTrades = useMemo(() => {
     if (!dateRange?.from) return trades;
-    return trades.filter(trade => {
+    return trades.filter((trade: Trade) => {
       const tradeDate = trade.exitTime;
       const from = dateRange.from!;
       const to = dateRange.to || new Date();
       return tradeDate >= from && tradeDate <= to;
     });
   }, [trades, dateRange]);
-  
-  const metrics = useMemo(() => calculateMetrics(filteredTrades), [filteredTrades]);
-  const equityData = useMemo(() => generateEquityCurve(filteredTrades), [filteredTrades]);
-  const volumeData = useMemo(() => generateVolumeData(filteredTrades), [filteredTrades]);
-  const feeData = useMemo(() => generateFeeBreakdown(filteredTrades), [filteredTrades]);
-  const timePerformance = useMemo(() => generateTimePerformance(filteredTrades), [filteredTrades]);
-  
+
   // Calculate long/short PnL
   const longPnl = useMemo(() => 
-    filteredTrades.filter(t => t.side === 'long').reduce((sum, t) => sum + t.pnl, 0),
+    filteredTrades.filter((t: Trade) => t.side === 'long').reduce((sum: number, t: Trade) => sum + t.pnl, 0),
     [filteredTrades]
   );
   const shortPnl = useMemo(() =>
-    filteredTrades.filter(t => t.side === 'short').reduce((sum, t) => sum + t.pnl, 0),
+    filteredTrades.filter((t: Trade) => t.side === 'short').reduce((sum: number, t: Trade) => sum + t.pnl, 0),
     [filteredTrades]
   );
-  
+
   const handleRefresh = () => {
-    setIsLoading(true);
-    setTimeout(() => setIsLoading(false), 1000);
+    refresh();
   };
 
   const formatCurrency = (value: number) => {
@@ -85,6 +89,90 @@ export function Dashboard() {
     if (absValue >= 1000) return `$${(value / 1000).toFixed(2)}K`;
     return `$${value.toFixed(2)}`;
   };
+
+  // Show empty state if not connected
+  if (!connected) {
+    return (
+      <div className="min-h-screen bg-background">
+        <DashboardHeader
+          dateRange={dateRange}
+          onDateRangeChange={setDateRange}
+          onRefresh={handleRefresh}
+          isLoading={isLoading}
+        />
+        <main className="container mx-auto px-4 py-6">
+          <Card>
+            <CardContent className="p-0">
+              <EmptyState type="not-connected" />
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
+  }
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <DashboardHeader
+          dateRange={dateRange}
+          onDateRangeChange={setDateRange}
+          onRefresh={handleRefresh}
+          isLoading={isLoading}
+        />
+        <main className="container mx-auto px-4 py-6">
+          <Card>
+            <CardContent className="p-0">
+              <EmptyState type="loading" />
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <DashboardHeader
+          dateRange={dateRange}
+          onDateRangeChange={setDateRange}
+          onRefresh={handleRefresh}
+          isLoading={isLoading}
+        />
+        <main className="container mx-auto px-4 py-6">
+          <Card>
+            <CardContent className="p-0">
+              <EmptyState type="error" message={error} />
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
+  }
+
+  // Show no trades state
+  if (trades.length === 0) {
+    return (
+      <div className="min-h-screen bg-background">
+        <DashboardHeader
+          dateRange={dateRange}
+          onDateRangeChange={setDateRange}
+          onRefresh={handleRefresh}
+          isLoading={isLoading}
+        />
+        <main className="container mx-auto px-4 py-6">
+          <Card>
+            <CardContent className="p-0">
+              <EmptyState type="no-trades" />
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -380,8 +468,7 @@ export function Dashboard() {
                     <div className="space-y-1">
                       <p className="text-sm text-muted-foreground">Profit Factor</p>
                       <p className="text-2xl font-bold font-mono">
-                        {((metrics.winningTrades * metrics.averageWin) / 
-                          ((metrics.losingTrades * metrics.averageLoss) || 1)).toFixed(2)}
+                        {metrics.profitFactor.toFixed(2)}
                       </p>
                     </div>
                   </div>
@@ -429,29 +516,35 @@ export function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div className="grid md:grid-cols-3 gap-6">
-                  {['spot', 'perpetual', 'options'].map(marketType => {
-                    const marketTrades = filteredTrades.filter(t => t.marketType === marketType);
-                    const marketPnl = marketTrades.reduce((sum, t) => sum + t.pnl, 0);
-                    const marketWins = marketTrades.filter(t => t.pnl > 0).length;
-                    const marketWinRate = marketTrades.length > 0 ? (marketWins / marketTrades.length) * 100 : 0;
+                  {(['spot', 'perpetual', 'options'] as const).map((marketType) => {
+                    const marketTrades = filteredTrades.filter((t: Trade) => t.marketType === marketType);
+                    const marketPnl = marketTrades.reduce((sum: number, t: Trade) => sum + t.pnl, 0);
+                    const marketWins = marketTrades.filter((t: Trade) => t.pnl > 0).length;
+                    const marketWinRate = marketTrades.length > 0 
+                      ? (marketWins / marketTrades.length) * 100 
+                      : 0;
                     
                     return (
-                      <div key={marketType} className="p-4 rounded-lg bg-muted/30 space-y-3">
-                        <h4 className="font-medium capitalize">{marketType}</h4>
+                      <div key={marketType} className="p-4 rounded-lg bg-muted/30 border border-border">
+                        <h4 className="text-sm font-medium text-muted-foreground capitalize mb-3">
+                          {marketType}
+                        </h4>
                         <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">PnL</span>
+                            <span className={`font-mono font-medium ${marketPnl >= 0 ? 'text-profit' : 'text-loss'}`}>
+                              {formatCurrency(marketPnl)}
+                            </span>
+                          </div>
                           <div className="flex justify-between">
                             <span className="text-sm text-muted-foreground">Trades</span>
                             <span className="font-mono">{marketTrades.length}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-sm text-muted-foreground">PnL</span>
-                            <span className={`font-mono ${marketPnl >= 0 ? 'text-profit' : 'text-loss'}`}>
-                              {marketPnl >= 0 ? '+' : ''}{formatCurrency(marketPnl)}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
                             <span className="text-sm text-muted-foreground">Win Rate</span>
-                            <span className="font-mono">{marketWinRate.toFixed(1)}%</span>
+                            <span className={`font-mono ${marketWinRate >= 50 ? 'text-profit' : 'text-loss'}`}>
+                              {marketWinRate.toFixed(1)}%
+                            </span>
                           </div>
                         </div>
                       </div>

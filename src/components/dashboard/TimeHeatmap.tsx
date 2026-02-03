@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { TimePerformance } from "@/lib/mockData";
+import { TimePerformance } from "@/lib/types";
 
 interface TimeHeatmapProps {
   data: TimePerformance[];
@@ -32,18 +32,18 @@ export function TimeHeatmap({ data, type }: TimeHeatmapProps) {
             const intensity = getIntensity(item.pnl);
             return (
               <div
-                key={item.period}
+                key={item.label}
                 className="group relative aspect-square rounded-sm cursor-pointer transition-transform hover:scale-110 hover:z-10"
                 style={{ backgroundColor: getColor(item.pnl, intensity) }}
               >
                 <span className="absolute inset-0 flex items-center justify-center text-[10px] font-mono opacity-70">
-                  {item.period.split(':')[0]}
+                  {item.label.split(':')[0]}
                 </span>
                 
                 {/* Tooltip */}
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
                   <div className="glass rounded-lg border border-border p-2 shadow-lg whitespace-nowrap">
-                    <p className="text-xs font-medium">{item.period}</p>
+                    <p className="text-xs font-medium">{item.label}</p>
                     <p className={cn(
                       "text-xs font-mono",
                       item.pnl >= 0 ? "text-profit" : "text-loss"
@@ -85,9 +85,9 @@ export function TimeHeatmap({ data, type }: TimeHeatmapProps) {
         const barWidth = (Math.abs(item.pnl) / maxPnl) * 100;
         
         return (
-          <div key={item.period} className="flex items-center gap-3">
+          <div key={item.label} className="flex items-center gap-3">
             <span className="text-xs text-muted-foreground w-12 shrink-0">
-              {item.period.slice(0, 3)}
+              {item.label.slice(0, 3)}
             </span>
             
             <div className="flex-1 relative h-6 flex items-center">

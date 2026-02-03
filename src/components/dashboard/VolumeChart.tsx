@@ -8,7 +8,7 @@ import {
   YAxis,
   Legend,
 } from "recharts";
-import { VolumeData } from "@/lib/mockData";
+import { VolumeData } from "@/lib/types";
 
 interface VolumeChartProps {
   data: VolumeData[];

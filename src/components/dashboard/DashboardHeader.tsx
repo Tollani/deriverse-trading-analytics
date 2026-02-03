@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -14,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { format, subDays, subMonths, startOfMonth, endOfMonth } from "date-fns";
-import { CalendarIcon, Wallet, Download, RefreshCw, Bell } from "lucide-react";
+import { CalendarIcon, Download, RefreshCw, Bell, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
 
@@ -36,8 +38,7 @@ const presets = [
 
 export function DashboardHeader({ dateRange, onDateRangeChange, onRefresh, isLoading }: DashboardHeaderProps) {
   const [preset, setPreset] = useState("30d");
-  const isConnected = true; // Mock wallet connection
-  const walletAddress = "7xKX...m3Dp";
+  const { connected, publicKey } = useWallet();
   
   const handlePresetChange = (value: string) => {
     setPreset(value);
@@ -47,6 +48,10 @@ export function DashboardHeader({ dateRange, onDateRangeChange, onRefresh, isLoa
     }
   };
 
+  const truncatedAddress = publicKey 
+    ? `${publicKey.toBase58().slice(0, 4)}...${publicKey.toBase58().slice(-4)}`
+    : '';
+
   return (
     <header className="sticky top-0 z-50 glass border-b border-border">
       <div className="container mx-auto px-4 py-3">
@@ -55,7 +60,6 @@ export function DashboardHeader({ dateRange, onDateRangeChange, onRefresh, isLoa
           <div className="flex items-center gap-3">
             <div className="relative w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
               <span className="text-xl font-bold text-primary-foreground">D</span>
-              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-profit border-2 border-background" />
             </div>
             <div>
               <h1 className="text-lg font-bold tracking-tight">Deriverse</h1>
@@ -124,18 +128,34 @@ export function DashboardHeader({ dateRange, onDateRangeChange, onRefresh, isLoa
               Export
             </Button>
             
-            {isConnected ? (
-              <Button size="sm" className="h-9 gap-2 bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20">
-                <Wallet className="h-4 w-4" />
-                <span className="font-mono">{walletAddress}</span>
-                <span className="w-2 h-2 rounded-full bg-profit animate-pulse" />
-              </Button>
-            ) : (
-              <Button size="sm" className="h-9 gap-2">
-                <Wallet className="h-4 w-4" />
-                Connect Wallet
-              </Button>
-            )}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-9 gap-2 hidden sm:flex"
+              asChild
+            >
+              <a href="https://alpha.deriverse.io" target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="h-4 w-4" />
+                Trade
+              </a>
+            </Button>
+            
+            {/* Wallet Button */}
+            <WalletMultiButton 
+              className={cn(
+                "!rounded-lg !h-9 !px-4 !text-sm !font-medium transition-all",
+                connected 
+                  ? "!bg-primary/10 !text-primary hover:!bg-primary/20 !border !border-primary/20"
+                  : "!bg-primary hover:!bg-primary/90 !text-primary-foreground"
+              )}
+            >
+              {connected && (
+                <span className="flex items-center gap-2">
+                  <span className="font-mono">{truncatedAddress}</span>
+                  <span className="w-2 h-2 rounded-full bg-profit animate-pulse" />
+                </span>
+              )}
+            </WalletMultiButton>
           </div>
         </div>
       </div>
